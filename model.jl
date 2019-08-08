@@ -10,6 +10,7 @@ using Tracker
 using BSON: @save, @load
 using LinearAlgebra
 using Base.Iterators: partition
+using CorpusLoaders: NERTaggedWord
 
 println("Dependencies Loaded")
 
@@ -243,7 +244,6 @@ loss(x, y) = sum([crf_loss(c, [geti(x[j], i) for j in 1:length(y[i])], y[i], ini
 β = 0.05 # rate decay
 ρ = 0.9 # momentum
 
-# TODO: rate decay
 opt = Flux.Optimiser(ExpDecay(β), Momentum(η, ρ))
 data = zip(X_input_train, Y_oh_train)
 
@@ -274,7 +274,7 @@ function try_outs()
     s2 = sum(confusion_matrix, dims = 1)
     dg = diag(confusion_matrix)
 
-    a = sum(dg ./ s1) / num_labels
+    a = sum([s1[i] == 0 ? 0 : dg[i]/s1[i] for i in eachindex(dg)]) / num_labels
     b = sum(dg ./ s2') / num_labels
 
     println("Precision and recall are:", a, " ", b)
